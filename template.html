@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>冒險之歌</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --desk: #1F2022;
+  --desk-line: #3A3C3F;
+  --paper: #EDE6CF;
+  --paper-deep: #E2D8B9;
+  --ink: #2B2926;
+  --ink-soft: #6B655A;
+  --gold: #B8913F;
+  --gold-soft: #D9BE78;
+  --navy: #1E2A4A;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--desk);
+  background-image: radial-gradient(circle at 50% 30%, #2A2C30 0%, var(--desk) 70%);
+  color: var(--ink);
+  font-family: "Noto Serif TC", "Songti TC", serif;
+  min-height: 100vh;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+.view { display: none; }
+.view.on { display: block; }
+
+/* 密碼 */
+#lock { padding: 18vh 16px 48px; text-align: center; }
+#lock form { display: inline-flex; flex-direction: column; gap: 14px; width: min(340px, 100%); }
+#lock input {
+  font: inherit; font-size: 16px; padding: 10px 14px; border-radius: 8px;
+  border: 1px solid var(--gold); background: #2A2C30; color: var(--paper); text-align: center;
+}
+#lock .msg { color: var(--gold-soft); font-size: 13px; min-height: 18px; }
+#lock label { color: var(--gold-soft); letter-spacing: .3em; font-size: 14px; }
+
+/* 封面 */
+#cover { padding: 32px 16px 48px; text-align: center; }
+.cover-btn {
+  border: 0; padding: 0; background: none;
+  display: inline-block; max-width: min(520px, 100%);
+  box-shadow: 0 18px 40px rgba(0,0,0,.55), 0 0 0 1px var(--desk-line);
+  border-radius: 4px 10px 10px 4px;
+  transition: transform .3s ease;
+}
+.cover-btn:hover { transform: translateY(-4px) rotate(-.4deg); }
+.cover-btn img { display: block; width: 100%; border-radius: 4px 10px 10px 4px; }
+.hint { color: var(--gold-soft); letter-spacing: .3em; font-size: 14px; margin-top: 20px; }
+
+/* 目錄 */
+#toc { padding: 32px 16px 64px; }
+.sheet {
+  max-width: 1080px; margin: 0 auto;
+  background: var(--paper);
+  border-radius: 6px;
+  padding: 28px 24px 36px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.5);
+  position: relative;
+}
+.sheet::before {
+  content: ""; position: absolute; inset: 10px;
+  border: 1px solid var(--ink-soft);
+  outline: 3px double var(--gold); outline-offset: 4px;
+  border-radius: 3px; pointer-events: none;
+}
+.toc-head { text-align: center; margin: 8px 0 24px; }
+.toc-head h1 { margin: 0; font-size: 30px; letter-spacing: .35em; color: var(--navy); }
+.toc-head .sub { color: var(--ink-soft); font-size: 13px; letter-spacing: .2em; margin-top: 6px; }
+.grid {
+  display: grid; gap: 28px 20px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  position: relative;
+}
+.card { border: 0; background: none; padding: 0; text-align: center; }
+.card img {
+  width: 100%; aspect-ratio: 2 / 3; object-fit: cover; display: block;
+  border: 1px solid var(--ink); box-shadow: 0 4px 10px rgba(0,0,0,.25);
+  transition: transform .2s ease;
+}
+.card:hover img { transform: translateY(-3px); }
+.bubble {
+  display: inline-block; position: relative; margin-top: 14px;
+  background: #F7F2E2; border: 1.5px solid var(--ink);
+  border-radius: 14px; padding: 5px 14px; font-size: 15px; font-weight: 600;
+}
+.bubble::before {
+  content: ""; position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+  border: 7px solid transparent; border-top: 0; border-bottom-color: var(--ink);
+}
+.bubble::after {
+  content: ""; position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+  border: 6px solid transparent; border-top: 0; border-bottom-color: #F7F2E2;
+}
+.card .date { display: block; color: var(--ink-soft); font-size: 12px; margin-top: 6px; letter-spacing: .08em; }
+
+/* 對開頁 */
+#spread { padding: 24px 16px 40px; }
+.book {
+  max-width: 1180px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1fr;
+  background: var(--paper);
+  border-radius: 6px;
+  box-shadow: 0 20px 44px rgba(0,0,0,.55);
+  position: relative;
+}
+.book::after {  /* 書脊的陰影 */
+  content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 36px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,.14) 45%, rgba(0,0,0,.14) 55%, transparent);
+  pointer-events: none;
+}
+.page { padding: 34px; position: relative; }
+.page::before {
+  content: ""; position: absolute; inset: 12px;
+  border: 1px solid rgba(43,41,38,.35); border-radius: 3px; pointer-events: none;
+}
+.page-left { display: flex; align-items: center; justify-content: center; }
+.page-left img { width: 100%; display: block; border: 1px solid var(--ink); box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+.page-right { display: flex; flex-direction: column; }
+.no { color: var(--gold); font-size: 13px; letter-spacing: .3em; }
+.page-right h2 { margin: 6px 0 4px; font-size: 28px; color: var(--navy); line-height: 1.35; }
+.meta { color: var(--ink-soft); font-size: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--gold-soft); }
+.text { font-size: 16px; line-height: 1.9; flex: 1; }
+.text h3 { font-size: 15px; color: var(--gold); letter-spacing: .25em; margin: 22px 0 6px; }
+.text p { margin: 0 0 10px; }
+.text blockquote {
+  margin: 8px 0 12px; padding: 4px 0 4px 16px;
+  border-left: 3px solid var(--gold); color: var(--navy);
+}
+.text ul { margin: 0 0 10px; padding-left: 1.2em; }
+.text code { font-family: ui-monospace, Menlo, monospace; font-size: .88em; background: var(--paper-deep); padding: 1px 5px; border-radius: 3px; }
+
+.nav {
+  max-width: 1180px; margin: 18px auto 0;
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav .mid { display: flex; gap: 10px; }
+.pill {
+  background: transparent; color: var(--gold-soft);
+  border: 1px solid var(--gold); border-radius: 999px;
+  padding: 7px 16px; font-size: 14px; letter-spacing: .1em;
+}
+.pill:hover:not(:disabled) { background: rgba(184,145,63,.15); }
+.pill:disabled { opacity: .3; cursor: default; }
+.toast { color: var(--gold-soft); font-size: 13px; text-align: center; height: 18px; margin-top: 10px; }
+
+@media (max-width: 820px) {
+  .book { grid-template-columns: 1fr; }
+  .book::after { display: none; }
+  .page { padding: 24px 22px; }
+  .page-right h2 { font-size: 24px; }
+  .nav { justify-content: center; }
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 22px 14px; }
+  .sheet { padding: 24px 16px 30px; }
+}
+</style>
+</head>
+<body>
+
+<section id="lock" class="view">
+  <form id="lock-form">
+    <label for="pw">請輸入密碼</label>
+    <input id="pw" type="password" autocomplete="current-password" autofocus>
+    <button class="pill" type="submit">打開</button>
+    <div class="msg" id="lock-msg"></div>
+  </form>
+</section>
+
+<section id="cover" class="view">
+  <button class="cover-btn" id="open-book" aria-label="打開冒險之歌"><img id="cover-img" alt="冒險之歌封面：彈魯特琴的吟遊詩人"></button>
+  <div class="hint">點一下，打開這本書</div>
+</section>
+
+<section id="toc" class="view">
+  <div class="sheet">
+    <div class="toc-head">
+      <h1>冒險之歌</h1>
+      <div class="sub">勇者查爾斯走過的路</div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <div class="nav" style="justify-content:center"><button class="pill" id="to-cover">闔上書</button></div>
+</section>
+
+<section id="spread" class="view">
+  <article class="book">
+    <div class="page page-left"><img id="sp-img" alt=""></div>
+    <div class="page page-right">
+      <div class="no" id="sp-no"></div>
+      <h2 id="sp-title"></h2>
+      <div class="meta" id="sp-meta"></div>
+      <div class="text" id="sp-text"></div>
+    </div>
+  </article>
+  <div class="nav">
+    <button class="pill" id="prev">← 上一頁</button>
+    <div class="mid">
+      <button class="pill" id="to-toc">目錄</button>
+      <button class="pill" id="copy">複製這一頁的連結</button>
+    </div>
+    <button class="pill" id="next">下一頁 →</button>
+  </div>
+  <div class="toast" id="toast"></div>
+</section>
+
+<script>
+const SALT = "__SALT__";
+const ROUNDS = __ROUNDS__;   // 要跟 build.py 的 PBKDF2_ROUNDS 一樣
+const KEY_STORE = "adventure-song-key";
+let PAGES = [];
+let byId = {};
+let KEY = null;
+const blobUrls = {};
+const $ = id => document.getElementById(id);
+
+const b64ToBytes = b => Uint8Array.from(atob(b), c => c.charCodeAt(0));
+const bytesToB64 = u => btoa(String.fromCharCode(...u));
+
+async function deriveKey(password) {
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: b64ToBytes(SALT), iterations: ROUNDS }, base, 256);
+  return new Uint8Array(bits);
+}
+
+async function decryptFile(path) {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error(`${path}: ${r.status}`);
+  const buf = new Uint8Array(await r.arrayBuffer());
+  const key = await crypto.subtle.importKey("raw", KEY, "AES-GCM", false, ["decrypt"]);
+  return new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: buf.slice(0, 12) }, key, buf.slice(12)));
+}
+
+async function imageUrl(path) {
+  if (!blobUrls[path]) {
+    blobUrls[path] = decryptFile(path).then(b => URL.createObjectURL(new Blob([b], { type: "image/jpeg" })));
+  }
+  return blobUrls[path];
+}
+
+function setImg(el, path) {
+  imageUrl(path).then(u => { el.src = u; }).catch(e => console.error("圖片解密失敗", path, e));
+}
+
+// 用這組金鑰解開目錄資料；密碼錯的話 AES-GCM 會直接失敗
+async function unlock(keyBytes) {
+  KEY = keyBytes;
+  const data = await decryptFile("data.enc");
+  PAGES = JSON.parse(new TextDecoder().decode(data));
+  byId = Object.fromEntries(PAGES.map((p, i) => [p.id, i]));
+}
+
+function savedKey() {
+  try { const v = localStorage.getItem(KEY_STORE); return v ? b64ToBytes(v) : null; }
+  catch { return null; }
+}
+function saveKey(k) {
+  try { localStorage.setItem(KEY_STORE, bytesToB64(k)); } catch { /* 無痕模式存不了，下次再輸入 */ }
+}
+function forgetKey() {
+  try { localStorage.removeItem(KEY_STORE); } catch {}
+}
+
+window.addEventListener("error", e => console.error("未捕捉", e.error));
+
+function show(name) {
+  for (const v of document.querySelectorAll(".view")) v.classList.toggle("on", v.id === name);
+  window.scrollTo(0, 0);
+}
+
+function urlFor(state) {
+  const base = location.pathname;
+  if (state.p) return `${base}?p=${state.p}`;
+  if (state.v === "toc") return `${base}?v=toc`;
+  return base;
+}
+
+function render(state) {
+  if (!KEY) return show("lock");
+  if (state.p && state.p in byId) return renderSpread(byId[state.p]);
+  if (state.v === "toc" || state.p) {   // 編號不存在就退回目錄
+    document.title = "冒險之歌";
+    return show("toc");
+  }
+  document.title = "冒險之歌";
+  show("cover");
+}
+
+function go(state) {
+  history.pushState(state, "", urlFor(state));
+  render(state);
+}
+
+function renderToc() {
+  const grid = $("grid");
+  for (const p of PAGES) {
+    const b = document.createElement("button");
+    b.className = "card";
+    const img = document.createElement("img");
+    img.alt = p.title;
+    setImg(img, p.img);
+    const bubble = document.createElement("span");
+    bubble.className = "bubble"; bubble.textContent = p.title;
+    const date = document.createElement("span");
+    date.className = "date"; date.textContent = p.date;
+    b.append(img, bubble, date);
+    b.addEventListener("click", () => go({ p: p.id }));
+    grid.append(b);
+  }
+}
+
+function renderSpread(i) {
+  const p = PAGES[i];
+  $("sp-img").removeAttribute("src");
+  setImg($("sp-img"), p.img);
+  $("sp-img").alt = p.title;
+  $("sp-no").textContent = `No. ${p.id}`;
+  $("sp-title").textContent = p.title;
+  $("sp-meta").textContent = [p.date, p.place, p.chapter].filter(Boolean).join("　·　");
+  $("sp-text").innerHTML = p.body;   // build.py 已經跳脫過
+  $("prev").disabled = i === 0;
+  $("next").disabled = i === PAGES.length - 1;
+  $("toast").textContent = "";
+  document.title = `${p.title}｜冒險之歌`;
+  show("spread");
+}
+
+function currentIndex() {
+  const p = new URLSearchParams(location.search).get("p");
+  return p in byId ? byId[p] : -1;
+}
+
+async function copyLink() {
+  const i = currentIndex();
+  if (i < 0) return;
+  const url = `${location.origin}${location.pathname}?p=${PAGES[i].id}`;
+  try {
+    await navigator.clipboard.writeText(url);
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = url; document.body.append(ta); ta.select();
+    document.execCommand("copy"); ta.remove();
+  }
+  $("toast").textContent = "連結已複製";
+}
+
+$("open-book").addEventListener("click", () => go({ v: "toc" }));
+$("to-cover").addEventListener("click", () => go({}));
+$("to-toc").addEventListener("click", () => go({ v: "toc" }));
+$("prev").addEventListener("click", () => { const i = currentIndex(); if (i > 0) go({ p: PAGES[i - 1].id }); });
+$("next").addEventListener("click", () => { const i = currentIndex(); if (i >= 0 && i < PAGES.length - 1) go({ p: PAGES[i + 1].id }); });
+$("copy").addEventListener("click", () => copyLink().catch(e => console.error("複製失敗", e)));
+document.addEventListener("keydown", e => {
+  if (!$("spread").classList.contains("on")) return;
+  if (e.key === "ArrowLeft") $("prev").click();
+  if (e.key === "ArrowRight") $("next").click();
+});
+window.addEventListener("popstate", () => render(stateFromUrl()));
+
+function stateFromUrl() {
+  const q = new URLSearchParams(location.search);
+  return { p: q.get("p"), v: q.get("v") };
+}
+
+function start() {
+  setImg($("cover-img"), "img/cover.enc");
+  renderToc();
+  render(stateFromUrl());
+}
+
+$("lock-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = $("lock-msg");
+  msg.textContent = "解鎖中…";
+  try {
+    const k = await deriveKey($("pw").value);
+    await unlock(k);
+    saveKey(k);
+    $("pw").value = "";
+    msg.textContent = "";
+    start();
+  } catch (err) {
+    console.error(err);
+    msg.textContent = "密碼不對";
+  }
+});
+
+(async () => {
+  const k = savedKey();
+  if (k) {
+    try { await unlock(k); start(); return; }
+    catch (e) { console.error("記住的金鑰打不開，改成重新輸入", e); forgetKey(); }
+  }
+  show("lock");
+})();
+</script>
+</body>
+</html>
