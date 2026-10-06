@@ -66,9 +66,9 @@ def body_to_html(lines: list[str]) -> str:
         s = line.strip()
         if not s:
             flush()
-        elif s.startswith("## "):
+        elif re.match(r"#{2,6} ", s):
             flush()
-            out.append(f"<h3>{inline(s[3:])}</h3>")
+            out.append(f"<h3>{inline(s.lstrip('#').strip())}</h3>")
         elif s.startswith("> "):
             if para or items:
                 flush()
