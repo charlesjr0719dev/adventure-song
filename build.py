@@ -98,7 +98,9 @@ def parse_page(md: Path) -> dict:
         if m:
             page[META_KEYS[m.group(1)]] = m.group(2).strip()
             continue
-        if s.startswith("![[") and s.endswith("]]"):
+        m = re.fullmatch(r"!\[\[([^\]|]+\.png)(?:\|[^\]]*)?\]\]", s)
+        if m:
+            page.setdefault("embeds", []).append(m.group(1))
             continue
         body.append(line)
 
@@ -181,6 +183,14 @@ def main():
             sys.exit(f"缺圖：{png.name}")
         to_jpg(png, CACHE / f"{page['id']}.jpg", 1024)
         page["img"] = f"img/{page['id']}.enc"
+        # 主圖以外、頁面裡另外嵌入的圖，依出現順序當第二張、第三張
+        page["extra"] = []
+        for n, name in enumerate([e for e in page.pop("embeds", []) if e != png.name], start=2):
+            extra_png = md.parent / name
+            if not extra_png.exists():
+                sys.exit(f"缺圖：{name}（{md.name} 裡嵌入的）")
+            to_jpg(extra_png, CACHE / f"{page['id']}-{n}.jpg", 1024)
+            page["extra"].append(f"img/{page['id']}-{n}.enc")
         pages.append(page)
 
     ids = [p["id"] for p in pages]
@@ -191,8 +201,10 @@ def main():
 
     changed = []
     for p in pages:
-        if encrypt_if_changed((CACHE / f"{p['id']}.jpg").read_bytes(), OUT / p["img"], key, cache):
-            changed.append(p["img"])
+        for rel in [p["img"]] + p["extra"]:
+            jpg = CACHE / (Path(rel).stem + ".jpg")
+            if encrypt_if_changed(jpg.read_bytes(), OUT / rel, key, cache):
+                changed.append(rel)
     if encrypt_if_changed((CACHE / "cover.jpg").read_bytes(), OUT / "img/cover.enc", key, cache):
         changed.append("img/cover.enc")
     data = json.dumps(pages, ensure_ascii=False).encode("utf-8")
@@ -200,7 +212,7 @@ def main():
         changed.append("data.enc")
 
     # 已經不在來源裡的頁面，把加密檔刪掉
-    keep = {p["img"] for p in pages} | {"img/cover.enc"}
+    keep = {r for p in pages for r in [p["img"]] + p["extra"]} | {"img/cover.enc"}
     for f in (OUT / "img").glob("*.enc"):
         rel = f"img/{f.name}"
         if rel not in keep:

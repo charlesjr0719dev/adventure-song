@@ -129,7 +129,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   content: ""; position: absolute; inset: 12px;
   border: 1px solid rgba(43,41,38,.35); border-radius: 3px; pointer-events: none;
 }
-.page-left { display: flex; align-items: center; justify-content: center; }
+.page-left { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
 .page-left img { width: 100%; display: block; border: 1px solid var(--ink); box-shadow: 0 4px 12px rgba(0,0,0,.25); }
 .page-right { display: flex; flex-direction: column; }
 .no { color: var(--gold); font-size: 13px; letter-spacing: .3em; }
@@ -199,7 +199,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 <section id="spread" class="view">
   <article class="book">
-    <div class="page page-left"><img id="sp-img" alt=""></div>
+    <div class="page page-left" id="sp-left"><img id="sp-img" alt=""></div>
     <div class="page page-right">
       <div class="no" id="sp-no"></div>
       <h2 id="sp-title"></h2>
@@ -325,6 +325,14 @@ function renderToc() {
 
 function renderSpread(i) {
   const p = PAGES[i];
+  for (const old of $("sp-left").querySelectorAll("img.extra")) old.remove();
+  for (const path of p.extra || []) {
+    const im = document.createElement("img");
+    im.className = "extra";
+    im.alt = p.title;
+    setImg(im, path);
+    $("sp-left").append(im);
+  }
   $("sp-img").removeAttribute("src");
   setImg($("sp-img"), p.img);
   $("sp-img").alt = p.title;
