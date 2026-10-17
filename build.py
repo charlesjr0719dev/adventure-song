@@ -122,6 +122,12 @@ def to_jpg(src: Path, dst: Path, width: int):
     """用 macOS 內建的 sips 轉成 JPEG，網頁載入比 PNG 快很多。"""
     if dst.exists() and dst.stat().st_mtime >= src.stat().st_mtime:
         return
+    # 橫式的圖保留寬 1536，不縮成 1024（2026-10-17 Charles：0012 橫式畫質太低）
+    info = subprocess.run(["sips", "-g", "pixelWidth", "-g", "pixelHeight", str(src)],
+                          check=True, capture_output=True, text=True, timeout=30).stdout
+    w, h = (int(re.search(rf"{k}: (\d+)", info).group(1)) for k in ("pixelWidth", "pixelHeight"))
+    if w > h:
+        width = min(w, 1536)
     subprocess.run(
         ["sips", "-s", "format", "jpeg", "-s", "formatOptions", "82",
          "--resampleWidth", str(width), str(src), "--out", str(dst)],
